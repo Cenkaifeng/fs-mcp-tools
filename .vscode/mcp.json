@@ -1,6 +1,6 @@
 {
   "servers": {
-    "weather-mcp-server": {
+    "fs-mcp-tools": {
       "type": "stdio",
       "command": "node",
       "args": ["${workspaceFolder}/dist/index.js"]
