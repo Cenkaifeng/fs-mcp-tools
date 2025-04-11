@@ -47,11 +47,16 @@ export function createServer(): McpServer {
 
   server.tool(
     "change_file",
-    "读取本地markdown文件",
+    "读写本地文件",
     {
+      operation: z
+        .enum(["read", "write"])
+        .default("read")
+        .describe("操作类型：read/写"),
       file_path: z.string().describe("项目内的相对或绝对路径"),
+      content: z.string().optional().describe("写入内容（仅写操作需要）"),
     },
-    async ({ file_path }) => {
+    async ({ operation, file_path, content }) => {
       const fs = require("fs");
       const path = require("path");
 
@@ -65,13 +70,29 @@ export function createServer(): McpServer {
         throw new Error("文件不存在");
       }
 
-      const content = fs.readFileSync(resolvedPath, "utf-8");
+      if (operation === "read") {
+        const content = fs.readFileSync(resolvedPath, "utf-8");
+        return {
+          content: [
+            {
+              type: "text",
+              text: content,
+            },
+          ],
+        };
+      }
 
+      // 写操作逻辑
+      const dir = path.dirname(resolvedPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(resolvedPath, content || "");
       return {
         content: [
           {
             type: "text",
-            text: content,
+            text: `文件已成功写入：${resolvedPath}`,
           },
         ],
       };
